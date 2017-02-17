@@ -10,26 +10,31 @@ import UIKit
 import MBProgressHUD
 
 // Main ViewController
-class RepoResultsViewController: UIViewController {
+class RepoResultsViewController: UIViewController, UITableViewDataSource, UITableViewDelegate {
 
     var searchBar: UISearchBar!
     var searchSettings = GithubRepoSearchSettings()
 
     var repos: [GithubRepo]!
+    
+    @IBOutlet weak var tableView: UITableView!
 
     override func viewDidLoad() {
         super.viewDidLoad()
-
+        tableView.dataSource = self
+        tableView.delegate = self
         // Initialize the UISearchBar
         searchBar = UISearchBar()
         searchBar.delegate = self
-
+        tableView.rowHeight = UITableViewAutomaticDimension
+        tableView.estimatedRowHeight = 200
         // Add SearchBar to the NavigationBar
         searchBar.sizeToFit()
         navigationItem.titleView = searchBar
 
         // Perform the first search when the view controller first loads
         doSearch()
+        
     }
 
     // Perform the search.
@@ -41,14 +46,43 @@ class RepoResultsViewController: UIViewController {
         GithubRepo.fetchRepos(searchSettings, successCallback: { (newRepos) -> Void in
 
             // Print the returned repositories to the output window
-            for repo in newRepos {
-                print(repo)
-            }   
-
+//            for repo in newRepos {
+//                print(repo)
+//                
+//            }
+            self.repos = newRepos
+            self.tableView.reloadData()
             MBProgressHUD.hide(for: self.view, animated: true)
             }, error: { (error) -> Void in
                 print(error)
         })
+        
+    }
+    
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        if let count = self.repos?.count {
+            return count
+        } else {
+            return 0
+        }
+    }
+    
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        let cell = tableView.dequeueReusableCell(withIdentifier: "githubCell", for: indexPath) as! githubCell
+        
+        let githubRepo = repos[indexPath.row]
+        print(githubRepo)
+        cell.githubRepo = githubRepo
+            cell.nameLabel.text = githubRepo.name
+            cell.authorLabel.text = githubRepo.ownerHandle
+            let avatarURL = NSURL(string:githubRepo.ownerAvatarURL!)
+            cell.avatarImageView.setImageWith(avatarURL as! URL)
+            cell.forkLabel.text = "\(githubRepo.forks!)"
+            cell.descriptionLabel.text = githubRepo.repoDescription
+            cell.starLabel.text = "\(githubRepo.stars!)"
+
+        
+        return cell
     }
 }
 

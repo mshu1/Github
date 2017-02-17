@@ -21,13 +21,16 @@ class GithubRepo: CustomStringConvertible {
     var ownerAvatarURL: String?
     var stars: Int?
     var forks: Int?
+    var repoDescription: String?
     
     // Initializes a GitHubRepo from a JSON dictionary
     init(jsonResult: NSDictionary) {
         if let name = jsonResult["name"] as? String {
             self.name = name
         }
-        
+        if let repoDescription = jsonResult["description"] as? String {
+            self.repoDescription = repoDescription
+        }
         if let stars = jsonResult["stargazers_count"] as? Int? {
             self.stars = stars
         }
@@ -51,7 +54,7 @@ class GithubRepo: CustomStringConvertible {
     class func fetchRepos(_ settings: GithubRepoSearchSettings, successCallback: @escaping ([GithubRepo]) -> (), error: ((Error?) -> ())?) {
         let manager = AFHTTPRequestOperationManager()
         let params = queryParamsWithSettings(settings)
-
+        
         manager.get(reposUrl, parameters: params, success: { (operation: AFHTTPRequestOperation, responseObject: Any) in
             if let response = responseObject as? NSDictionary, let results = response["items"] as? NSArray {
                 var repos: [GithubRepo] = []
@@ -99,5 +102,6 @@ class GithubRepo: CustomStringConvertible {
             "\n\t[Forks: \(self.forks!)]" +
             "\n\t[Owner: \(self.ownerHandle!)]" +
             "\n\t[Avatar: \(self.ownerAvatarURL!)]"
+            + "\n\t[Description: \(self.repoDescription!)]"
     }
 }
